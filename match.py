@@ -14,8 +14,6 @@ from PIL import Image, ImageTk
 from io import BytesIO
 
 
-# =============== utilities =================
-
 def list_audio_devices():
     devices = sd.query_devices()
     for i, device in enumerate(devices):
@@ -70,20 +68,17 @@ def transcrever_audio(file_path):
         print(f"Erro ao transcrever o áudio: {e}")
         return None
 
-# Função que realiza a transcrição e o reconhecimento de em paralelo
 def process_audio(file_path, window):
     transcription = transcrever_audio(file_path)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     recognition_result = loop.run_until_complete(recognize_song(file_path))
 
-    # formatar os resultados
     song_title = recognition_result.get('title') if recognition_result else "não encontrada"
     artist_name = recognition_result.get('subtitle') if recognition_result else ""
     image_url = recognition_result['images']['background'] if recognition_result and 'images' in recognition_result and 'background' in recognition_result['images'] else None
     transcription_text = transcription if transcription else "não transcrita"
 
-    # Exibir resultados
     # messagebox.showinfo(
     #     "Resultado",
     #     f"Transcrição do Áudio:\n{transcription_text}\n\nMúsica Encontrada:\nArtista: {artist_name}\nTítulo: {song_title}",
@@ -104,38 +99,31 @@ def process_audio(file_path, window):
 
 
 def show_custom_message_window(title, artist_name, song_title, transcription_text, image_url):
-    # Cria uma nova janela
     message_window = Toplevel(janela)
     message_window.title("Resultado")
     message_window.geometry("700x450")
     
-    # Centrando a janela na tela
     window_width = message_window.winfo_reqwidth()
     window_height = message_window.winfo_reqheight()
     position_right = int(message_window.winfo_screenwidth()/2 - window_width/2)
     position_down = int(message_window.winfo_screenheight()/2 - window_height/2)
     message_window.geometry(f"+{position_right}+{position_down}")
     
-    # Aplica um estilo de fonte
     bold_font = tkFont.Font(family="Helvetica", size=15, weight="bold")
     italic_font = tkFont.Font(family="Helvetica", size=15, slant="italic")
 
     lbl_music_found = Label(message_window, text="\nMUSICA INFO:\n", font=bold_font)
     lbl_music_found.pack()
 
-    # Verifica se a URL da imagem é válida
     if image_url is None or not image_url.startswith(('http://', 'https://')):
         print("URL da imagem inválida ou não fornecida.")
     else:
-        # Tenta carregar a imagem do artista
         try:
             response = requests.get(image_url)
-            # Verifica se a requisição teve sucesso
             if response.status_code == 200:
                 artist_image = Image.open(BytesIO(response.content))
                 artist_photo = ImageTk.PhotoImage(artist_image.resize((200, 200)))
                 
-                # Cria um label para a imagem do artista na janela
                 image_label = Label(message_window, image=artist_photo)
                 image_label.image = artist_photo  
                 image_label.pack()
@@ -150,19 +138,15 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
     lbl_artist = Label(message_window, text=f"Artista: {artist_name}", font=italic_font)
     lbl_artist.pack()
 
-    # Cria Labels para adicionar formatação ao texto
     lbl_transcription = Label(message_window, text="\nTRANSCRIÇAO DE AUDIO:", font=bold_font)
     lbl_transcription.pack(anchor='w', padx=5)
 
-    # Caixa de texto da transcrição normal
     lbl_transcription_text = Label(message_window, text=transcription_text, font=italic_font)
     lbl_transcription_text.pack(anchor='w', padx=5)
     
-    # Botão para fechar a janela
     btn_close = Button(message_window, text="Fechar", command=message_window.destroy)
     btn_close.pack(anchor='s', pady=10)
     
-    #background 
     message_window.configure(bg='#1a1a1a')
     lbl_transcription.configure(bg='#1a1a1a', fg='white')
     lbl_transcription_text.configure(bg='#1a1a1a', fg='white')
@@ -186,13 +170,12 @@ def iniciar():
     atualizar_estado_do_botao(True)
     texto_resposta["text"] = ""
     
-    #forcar atualizacao da janela
     janela.update_idletasks()
     janela.update()
     
-    duration = 10  # Duration in seconds
-    sample_rate = 44100  # Sample rate for recording
-    channels = 1  # Mono audio
+    duration = 10  
+    sample_rate = 44100  
+    channels = 1  
 
     audio = record_audio(selected_device_name, duration, sample_rate, channels)
     if audio is not None:
@@ -205,15 +188,11 @@ def iniciar():
 
 
     
-# ================= interface ===============  
-
-# Tkinter GUI
 janela = Tk()
 janela.title("Match songs!!")
 janela.geometry("400x600")
 janela.configure(bg='#111e3f')
 
-# icone
 icone = PhotoImage(file='teste.png') 
 janela.iconphoto(True, icone)
 
