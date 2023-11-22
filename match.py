@@ -4,8 +4,9 @@ import threading
 from tkinter import *
 import sounddevice as sd
 from shazamio import Shazam
-from tkinter import messagebox  
+from tkinter import messagebox
 from scipy.io.wavfile import write
+from transformers import pipeline
 
 
 # =============== utilities =================
@@ -17,30 +18,8 @@ def list_audio_devices():
         print(f"  Channels: {device['max_input_channels']}")
         print(f"  Sample Rate: {device['default_samplerate']}")
         print()
-
-async def recognize_song(file_path, window):
-    shazam = Shazam()
-    recognize_result = await shazam.recognize_song(file_path)
-
-    if recognize_result.get('track'):
-        track_info = recognize_result['track']
-        song_title = track_info.get('title')
-        artist_name = track_info.get('subtitle')
-        if song_title and artist_name:
-            messagebox.showinfo("Resultado", f"Artista: {artist_name}\nMúsica: {song_title}", parent=window)
-        else:
-            messagebox.showinfo("Resultado", "Informações da música não encontradas.", parent=window)
-    else:
-        messagebox.showinfo("Resultado", "Nenhuma música reconhecida.", parent=window)
-    
-    os.remove(file_path)
-    reativar_botao()
-
-def reativar_botao():
-    atualizar_estado_do_botao(False)
-    janela.update_idletasks()
-    janela.update()   
-    
+        
+        
 def record_audio(device_name, duration, sample_rate, channels):
     device_index = None
     devices = sd.query_devices()
@@ -59,11 +38,64 @@ def record_audio(device_name, duration, sample_rate, channels):
     print("Gravação finalizada")
     return audio
 
+def reativar_botao():
+    atualizar_estado_do_botao(False)
+    janela.update_idletasks()
+    janela.update()   
+
+async def recognize_song(file_path):
+    shazam = Shazam()
+    recognize_result = await shazam.recognize_song(file_path)
+
+    if recognize_result.get('track'):
+        track_info = recognize_result['track']
+        print("Shazam info ok")
+        return track_info
+    
+    os.remove(file_path)
+    reativar_botao()
+    
+def transcrever_audio(file_path):
+    try:
+        pipe = pipeline("automatic-speech-recognition", model="openai/whisper-small")
+        result = pipe(file_path)
+        print("Transcription ok")
+        return result["text"]
+    except Exception as e:
+        print(f"Erro ao transcrever o áudio: {e}")
+        return None
+
+# Função que realiza a transcrição e o reconhecimento de em paralelo
+def process_audio(file_path, window):
+    transcription = transcrever_audio(file_path)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    recognition_result = loop.run_until_complete(recognize_song(file_path))
+
+    # formatar os resultados
+    song_title = recognition_result.get('title') if recognition_result else "não encontrada"
+    artist_name = recognition_result.get('subtitle') if recognition_result else ""
+    #image_album = recognition_result.
+    transcription_text = transcription if transcription else "não transcrita"
+
+    # Exibir resultados
+    messagebox.showinfo(
+        "Resultado",
+        f"Transcrição do Áudio:\n{transcription_text}\n\nMúsica Encontrada:\nArtista: {artist_name}\nTítulo: {song_title}",
+        parent=window
+    )
+
+    os.remove(file_path)
+    reativar_botao()
+    print("End of process")
+
+
 def atualizar_estado_do_botao(gravando):
     if gravando:
         botao_iniciar.config(text="Gravando...", state="disabled", bg='#FF0000')
     else:
         botao_iniciar.config(text="Iniciar Gravação", state="normal", bg='#111e3f')
+
 
 def iniciar():
     selected_device_name = selected_device.get()  # Get selected device name from OptionMenu
@@ -82,15 +114,13 @@ def iniciar():
     if audio is not None:
         file_path = "temp_audio.wav"
         write(file_path, sample_rate, audio)
-        # analisar áudio de forma assíncrona em uma outra thread.
-        threading.Thread(target=lambda: asyncio.run(recognize_song(file_path, janela))).start()
+        threading.Thread(target=process_audio, args=(file_path, janela)).start()
     else:
-        atualizar_estado_do_botao(False)  # Se a gravação falhar, reativa o botão.
+        atualizar_estado_do_botao(False) 
 
 
 
-
-
+    
 # ================= interface ===============  
 
 # Tkinter GUI
