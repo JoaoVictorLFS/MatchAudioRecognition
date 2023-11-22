@@ -166,7 +166,7 @@ def atualizar_estado_do_botao(gravando):
 
 
 def iniciar():
-    selected_device_name = selected_device.get()  # Get selected device name from OptionMenu
+    selected_device_name = selected_device.get()  
     atualizar_estado_do_botao(True)
     texto_resposta["text"] = ""
     
