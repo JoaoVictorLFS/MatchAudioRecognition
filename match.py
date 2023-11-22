@@ -13,6 +13,7 @@ import requests
 from PIL import Image, ImageTk 
 from io import BytesIO
 
+# =============== utilities ====================
 
 def list_audio_devices():
     devices = sd.query_devices()
@@ -21,8 +22,7 @@ def list_audio_devices():
         print(f"  Channels: {device['max_input_channels']}")
         print(f"  Sample Rate: {device['default_samplerate']}")
         print()
-        
-        
+           
 def record_audio(device_name, duration, sample_rate, channels):
     device_index = None
     devices = sd.query_devices()
@@ -114,7 +114,6 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
     lbl_music_found = Label(message_window, text="\nMUSICA INFO:\n", font=bold_font)
     lbl_music_found.pack()
 
-    # Verifica se a URL da imagem é válida
     if image_url is None or not image_url.startswith(('http://', 'https://')):
         print("URL da imagem inválida ou não fornecida.")
     else:
@@ -185,7 +184,7 @@ def iniciar():
         atualizar_estado_do_botao(False) 
 
 
-
+# ================= interface ==================== 
     
 janela = Tk()
 janela.title("Match songs!!")
