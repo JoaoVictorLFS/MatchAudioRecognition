@@ -14,8 +14,6 @@ from PIL import Image, ImageTk
 from io import BytesIO
 
 
-# =============== utilities =================
-
 def list_audio_devices():
     devices = sd.query_devices()
     for i, device in enumerate(devices):
@@ -75,13 +73,11 @@ def process_audio(file_path, window):
     asyncio.set_event_loop(loop)
     recognition_result = loop.run_until_complete(recognize_song(file_path))
 
-    # formatar os resultados
     song_title = recognition_result.get('title') if recognition_result else "não encontrada"
     artist_name = recognition_result.get('subtitle') if recognition_result else "não encontrada"
     image_url = recognition_result['images']['background'] if recognition_result and 'images' in recognition_result and 'background' in recognition_result['images'] else None
     transcription_text = transcription if transcription else "audio não transcrito"
 
-    # Exibir resultados
     # messagebox.showinfo(
     #     "Resultado",
     #     f"Transcrição do Áudio:\n{transcription_text}\n\nMúsica Encontrada:\nArtista: {artist_name}\nTítulo: {song_title}",
@@ -106,7 +102,6 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
     message_window.title("Resultado")
     message_window.geometry("700x450")
     
-    # Centralizar janela
     window_width = message_window.winfo_reqwidth()
     window_height = message_window.winfo_reqheight()
     position_right = int(message_window.winfo_screenwidth()/2 - window_width/2)
@@ -118,12 +113,11 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
 
     lbl_music_found = Label(message_window, text="\nMUSICA INFO:\n", font=bold_font)
     lbl_music_found.pack()
-    
+
     # Verifica se a URL da imagem é válida
     if image_url is None or not image_url.startswith(('http://', 'https://')):
         print("URL da imagem inválida ou não fornecida.")
     else:
-        # Tenta carregar a imagem do artista
         try:
             response = requests.get(image_url)
             if response.status_code == 200:
@@ -175,7 +169,6 @@ def iniciar():
     atualizar_estado_do_botao(True)
     texto_resposta["text"] = ""
     
-    #forcar atualizacao da janela
     janela.update_idletasks()
     janela.update()
     
@@ -194,15 +187,11 @@ def iniciar():
 
 
     
-# ================= interface ===============  
-
-# Tkinter GUI
 janela = Tk()
 janela.title("Match songs!!")
 janela.geometry("400x600")
 janela.configure(bg='#111e3f')
 
-# icone
 icone = PhotoImage(file='teste.png') 
 janela.iconphoto(True, icone)
 
