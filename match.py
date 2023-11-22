@@ -48,6 +48,7 @@ def reativar_botao():
     janela.update_idletasks()
     janela.update()   
 
+
 async def recognize_song(file_path):
     shazam = Shazam()
     recognize_result = await shazam.recognize_song(file_path)
@@ -56,9 +57,7 @@ async def recognize_song(file_path):
         track_info = recognize_result['track']
         print("Shazam info ok")
         return track_info
-    
-    os.remove(file_path)
-    reativar_botao()
+
     
 def transcrever_audio(file_path):
     try:
@@ -70,7 +69,6 @@ def transcrever_audio(file_path):
         print(f"Erro ao transcrever o áudio: {e}")
         return None
 
-# Função que realiza a transcrição e o reconhecimento de em paralelo
 def process_audio(file_path, window):
     transcription = transcrever_audio(file_path)
     loop = asyncio.new_event_loop()
@@ -79,9 +77,9 @@ def process_audio(file_path, window):
 
     # formatar os resultados
     song_title = recognition_result.get('title') if recognition_result else "não encontrada"
-    artist_name = recognition_result.get('subtitle') if recognition_result else ""
+    artist_name = recognition_result.get('subtitle') if recognition_result else "não encontrada"
     image_url = recognition_result['images']['background'] if recognition_result and 'images' in recognition_result and 'background' in recognition_result['images'] else None
-    transcription_text = transcription if transcription else "não transcrita"
+    transcription_text = transcription if transcription else "audio não transcrito"
 
     # Exibir resultados
     # messagebox.showinfo(
@@ -91,12 +89,12 @@ def process_audio(file_path, window):
     # )
 
     show_custom_message_window(
-    "Resultado",
-    artist_name=artist_name,
-    song_title=song_title,
-    transcription_text=transcription_text,
-    image_url=image_url
-)
+        "Resultado",
+        artist_name=artist_name,
+        song_title=song_title,
+        transcription_text=transcription_text,
+        image_url=image_url
+    )
     
     os.remove(file_path)
     reativar_botao()
@@ -104,25 +102,23 @@ def process_audio(file_path, window):
 
 
 def show_custom_message_window(title, artist_name, song_title, transcription_text, image_url):
-    # Cria uma nova janela
     message_window = Toplevel(janela)
     message_window.title("Resultado")
     message_window.geometry("700x450")
     
-    # Centrando a janela na tela
+    # Centralizar janela
     window_width = message_window.winfo_reqwidth()
     window_height = message_window.winfo_reqheight()
     position_right = int(message_window.winfo_screenwidth()/2 - window_width/2)
     position_down = int(message_window.winfo_screenheight()/2 - window_height/2)
     message_window.geometry(f"+{position_right}+{position_down}")
     
-    # Aplica um estilo de fonte
     bold_font = tkFont.Font(family="Helvetica", size=15, weight="bold")
     italic_font = tkFont.Font(family="Helvetica", size=15, slant="italic")
 
     lbl_music_found = Label(message_window, text="\nMUSICA INFO:\n", font=bold_font)
     lbl_music_found.pack()
-
+    
     # Verifica se a URL da imagem é válida
     if image_url is None or not image_url.startswith(('http://', 'https://')):
         print("URL da imagem inválida ou não fornecida.")
@@ -130,12 +126,10 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
         # Tenta carregar a imagem do artista
         try:
             response = requests.get(image_url)
-            # Verifica se a requisição teve sucesso
             if response.status_code == 200:
                 artist_image = Image.open(BytesIO(response.content))
                 artist_photo = ImageTk.PhotoImage(artist_image.resize((200, 200)))
                 
-                # Cria um label para a imagem do artista na janela
                 image_label = Label(message_window, image=artist_photo)
                 image_label.image = artist_photo  
                 image_label.pack()
@@ -150,29 +144,24 @@ def show_custom_message_window(title, artist_name, song_title, transcription_tex
     lbl_artist = Label(message_window, text=f"Artista: {artist_name}", font=italic_font)
     lbl_artist.pack()
 
-    # Cria Labels para adicionar formatação ao texto
     lbl_transcription = Label(message_window, text="\nTRANSCRIÇAO DE AUDIO:", font=bold_font)
     lbl_transcription.pack(anchor='w', padx=5)
 
-    # Caixa de texto da transcrição normal
     lbl_transcription_text = Label(message_window, text=transcription_text, font=italic_font)
     lbl_transcription_text.pack(anchor='w', padx=5)
     
-    # Botão para fechar a janela
     btn_close = Button(message_window, text="Fechar", command=message_window.destroy)
     btn_close.pack(anchor='s', pady=10)
     
-    #background 
+    # Background color
     message_window.configure(bg='#1a1a1a')
     lbl_transcription.configure(bg='#1a1a1a', fg='white')
     lbl_transcription_text.configure(bg='#1a1a1a', fg='white')
     lbl_music_found.configure(bg='#1a1a1a', fg='white')
     lbl_artist.configure(bg='#1a1a1a', fg='white')
     lbl_title.configure(bg='#1a1a1a', fg='white')
-    btn_close.configure(bg='#1a1a1a', fg='white')
+    #btn_close.configure(bg='#1a1a1a', fg='white')
     
-
-
 
 def atualizar_estado_do_botao(gravando):
     if gravando:
@@ -182,7 +171,7 @@ def atualizar_estado_do_botao(gravando):
 
 
 def iniciar():
-    selected_device_name = selected_device.get()  # Get selected device name from OptionMenu
+    selected_device_name = selected_device.get()  # Selecionar mic do OptionMenu
     atualizar_estado_do_botao(True)
     texto_resposta["text"] = ""
     
@@ -190,8 +179,8 @@ def iniciar():
     janela.update_idletasks()
     janela.update()
     
-    duration = 10  # Duration in seconds
-    sample_rate = 44100  # Sample rate for recording
+    duration = 10  
+    sample_rate = 44100  
     channels = 1  # Mono audio
 
     audio = record_audio(selected_device_name, duration, sample_rate, channels)
