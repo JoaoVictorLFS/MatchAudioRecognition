@@ -7,6 +7,11 @@ from shazamio import Shazam
 from tkinter import messagebox
 from scipy.io.wavfile import write
 from transformers import pipeline
+from tkinter import Toplevel, Label, Button, font as tkFont
+from PIL import Image, ImageTk
+import requests
+from PIL import Image, ImageTk 
+from io import BytesIO
 
 
 # =============== utilities =================
@@ -75,19 +80,98 @@ def process_audio(file_path, window):
     # formatar os resultados
     song_title = recognition_result.get('title') if recognition_result else "não encontrada"
     artist_name = recognition_result.get('subtitle') if recognition_result else ""
-    #image_album = recognition_result.
+    image_url = recognition_result['images']['background'] if recognition_result and 'images' in recognition_result and 'background' in recognition_result['images'] else None
     transcription_text = transcription if transcription else "não transcrita"
 
     # Exibir resultados
-    messagebox.showinfo(
-        "Resultado",
-        f"Transcrição do Áudio:\n{transcription_text}\n\nMúsica Encontrada:\nArtista: {artist_name}\nTítulo: {song_title}",
-        parent=window
-    )
+    # messagebox.showinfo(
+    #     "Resultado",
+    #     f"Transcrição do Áudio:\n{transcription_text}\n\nMúsica Encontrada:\nArtista: {artist_name}\nTítulo: {song_title}",
+    #     parent=window
+    # )
 
+    show_custom_message_window(
+    "Resultado",
+    artist_name=artist_name,
+    song_title=song_title,
+    transcription_text=transcription_text,
+    image_url=image_url
+)
+    
     os.remove(file_path)
     reativar_botao()
     print("End of process")
+
+
+def show_custom_message_window(title, artist_name, song_title, transcription_text, image_url):
+    # Cria uma nova janela
+    message_window = Toplevel(janela)
+    message_window.title("Resultado")
+    message_window.geometry("700x450")
+    
+    # Centrando a janela na tela
+    window_width = message_window.winfo_reqwidth()
+    window_height = message_window.winfo_reqheight()
+    position_right = int(message_window.winfo_screenwidth()/2 - window_width/2)
+    position_down = int(message_window.winfo_screenheight()/2 - window_height/2)
+    message_window.geometry(f"+{position_right}+{position_down}")
+    
+    # Aplica um estilo de fonte
+    bold_font = tkFont.Font(family="Helvetica", size=15, weight="bold")
+    italic_font = tkFont.Font(family="Helvetica", size=15, slant="italic")
+
+    lbl_music_found = Label(message_window, text="\nMUSICA INFO:\n", font=bold_font)
+    lbl_music_found.pack()
+
+    # Verifica se a URL da imagem é válida
+    if image_url is None or not image_url.startswith(('http://', 'https://')):
+        print("URL da imagem inválida ou não fornecida.")
+    else:
+        # Tenta carregar a imagem do artista
+        try:
+            response = requests.get(image_url)
+            # Verifica se a requisição teve sucesso
+            if response.status_code == 200:
+                artist_image = Image.open(BytesIO(response.content))
+                artist_photo = ImageTk.PhotoImage(artist_image.resize((200, 200)))
+                
+                # Cria um label para a imagem do artista na janela
+                image_label = Label(message_window, image=artist_photo)
+                image_label.image = artist_photo  
+                image_label.pack()
+            else:
+                print("Não foi possível carregar a imagem do artista.")
+        except Exception as e:
+            print(f"Ocorreu um erro ao baixar a imagem do artista: {e}")
+    
+    lbl_title = Label(message_window, text=f"Título: {song_title}", font=bold_font)
+    lbl_title.pack()
+    
+    lbl_artist = Label(message_window, text=f"Artista: {artist_name}", font=italic_font)
+    lbl_artist.pack()
+
+    # Cria Labels para adicionar formatação ao texto
+    lbl_transcription = Label(message_window, text="\nTRANSCRIÇAO DE AUDIO:", font=bold_font)
+    lbl_transcription.pack(anchor='w', padx=5)
+
+    # Caixa de texto da transcrição normal
+    lbl_transcription_text = Label(message_window, text=transcription_text, font=italic_font)
+    lbl_transcription_text.pack(anchor='w', padx=5)
+    
+    # Botão para fechar a janela
+    btn_close = Button(message_window, text="Fechar", command=message_window.destroy)
+    btn_close.pack(anchor='s', pady=10)
+    
+    #background 
+    message_window.configure(bg='#1a1a1a')
+    lbl_transcription.configure(bg='#1a1a1a', fg='white')
+    lbl_transcription_text.configure(bg='#1a1a1a', fg='white')
+    lbl_music_found.configure(bg='#1a1a1a', fg='white')
+    lbl_artist.configure(bg='#1a1a1a', fg='white')
+    lbl_title.configure(bg='#1a1a1a', fg='white')
+    btn_close.configure(bg='#1a1a1a', fg='white')
+    
+
 
 
 def atualizar_estado_do_botao(gravando):
